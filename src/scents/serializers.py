@@ -67,6 +67,23 @@ class ReservationSerializer(serializers.ModelSerializer):
         if not capsule:
             return attrs
 
+        # WARN: BR-001
+        """
+        Uma cápsula só pode ser reservada quando estiver:
+        - dentro da validade;
+            Ok
+
+        - com status `available`;
+            Falta: o código só barra `checked_out`
+            Cápsula `reserved`, `quarantine` ou `retired` passa na validação
+
+        - fora de quarentena;
+            Falta: não é validado em nenhum lugar
+
+        - sem reserva ativa.
+            Falta: Só olhar `checked_out` deixa passar uma segunda reserva
+            enquanto a primeira está `pending`.
+        """
         if capsule.expires_at < timezone.localdate():
             raise serializers.ValidationError("Cápsula vencida não pode ser reservada.")
 
