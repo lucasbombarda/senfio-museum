@@ -104,7 +104,7 @@ class MuseumProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsCurator]
 
 
-class StatusChangeViewSet(viewsets.ModelViewSet):
+class StatusChangeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StatusChange.objects.select_related("capsule").all()
     serializer_class = StatusChangeSerializer
 

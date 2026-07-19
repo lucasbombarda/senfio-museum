@@ -182,7 +182,7 @@ def record_status_change(capsule, to_status, actor="", reason=""):
     - QualityCheckSerializer.create: -> quarantine. Falta.
     - webhook: -> quarantine. Falta.
     - aposentar (PATCH): -> retired. Falta.
-    Imutabilidade: StatusChangeViewSet permite PUT/PATCH/DELETE. Falta.
+    Imutabilidade: StatusChangeViewSet permite PUT/PATCH/DELETE. Feito.
     """
     from_status = capsule.status
     StatusChange.objects.create(
