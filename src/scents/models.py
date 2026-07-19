@@ -173,6 +173,17 @@ def record_status_change(capsule, to_status, actor="", reason=""):
 
     Move a cápsula para `to_status` e cria o `StatusChange` correspondente.
     """
+
+    # WARN: BR-005
+    """
+    Só chamado em ReservationSerializer.create. Caminhos que mudam status
+    sem passar por aqui (nao geram trilha):
+    - checkout: reserved -> checked_out. Falta.
+    - QualityCheckSerializer.create: -> quarantine. Falta.
+    - webhook: -> quarantine. Falta.
+    - aposentar (PATCH): -> retired. Falta.
+    Imutabilidade: StatusChangeViewSet permite PUT/PATCH/DELETE. Falta.
+    """
     from_status = capsule.status
     StatusChange.objects.create(
         capsule=capsule,
