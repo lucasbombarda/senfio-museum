@@ -111,6 +111,20 @@ class StatusChangeViewSet(viewsets.ModelViewSet):
 
 class ExternalMuseumWebhookView(APIView):
     def post(self, request):
+        # WARN: BR-003
+        """
+        Evento novo registrado e processado.
+            Ok
+
+        Repetido (source + event_id) retorna sucesso sem duplicar.
+            Falta: sem checagem nem unique_together. Duplica sempre.
+
+        capsule.quarantined manda cápsula pra quarentena.
+            Meio: update() silencioso, capsule_id ausente/inexistente nao erra.
+
+        Payload invalido retorna erro claro.
+            Falta: payload e JSONField livre, capsule_id nunca validado.
+        """
         serializer = ExternalEventSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         event = serializer.save(processed_at=timezone.now())
