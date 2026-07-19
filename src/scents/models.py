@@ -90,15 +90,14 @@ class Reservation(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-
-    # WARN: BR-001
-    """
-    Concorrência (critério de aceite 4): race condition
-
-    Falta: garantia no banco. Uma UniqueConstraint parcial em `capsule`
-    condicionada a status in (pending, checked_out) faz o Postgres rejeitar a
-    segunda inserção mesmo sob concorrência.
-    """
+        # WARN: BR-001
+        constraints = [
+            models.UniqueConstraint(
+                fields=["capsule"],
+                condition=models.Q(status__in=["pending", "checked_out"]),
+                name="unique_active_reservation_per_capsule",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.visitor_name} -> {self.capsule}"

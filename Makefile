@@ -1,4 +1,4 @@
-.PHONY: bootstrap doctor ci ci-check up down logs clean_db test test-up test-down migrate seed run shell
+.PHONY: bootstrap doctor ci ci-check up down logs clean_db test test-up test-down makemigrations migrate seed run shell
 
 PYTHON := uv run python
 # O projeto Django vive em src/ (config, scents, tests e manage.py).
@@ -65,6 +65,9 @@ clean_db:
 	$(MAKE) up
 	$(MAKE) migrate
 	$(MAKE) seed
+
+makemigrations:
+	$(MANAGE) makemigrations
 
 migrate:
 	$(MANAGE) migrate

@@ -1,3 +1,4 @@
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -68,32 +69,25 @@ class ReservationSerializer(serializers.ModelSerializer):
             return attrs
 
         # WARN: BR-001
-        """
-        Uma cápsula só pode ser reservada quando estiver:
-        - dentro da validade;
-            Ok
-
-        - com status `available`;
-            Falta: o código só barra `checked_out`
-            Cápsula `reserved`, `quarantine` ou `retired` passa na validação
-
-        - fora de quarentena;
-            Falta: não é validado em nenhum lugar
-
-        - sem reserva ativa.
-            Falta: Só olhar `checked_out` deixa passar uma segunda reserva
-            enquanto a primeira está `pending`.
-        """
         if capsule.expires_at < timezone.localdate():
             raise serializers.ValidationError("Cápsula vencida não pode ser reservada.")
 
-        if capsule.status == Capsule.Status.CHECKED_OUT:
-            raise serializers.ValidationError("Cápsula já está retirada.")
+        # `available` cobre de uma vez: fora de quarentena, sem reserva ativa
+        # (reserved/checked_out) e não aposentada.
+        if capsule.status != Capsule.Status.AVAILABLE:
+            raise serializers.ValidationError("Cápsula não está disponível para reserva.")
 
         return attrs
 
     def create(self, validated_data):
-        reservation = Reservation.objects.create(**validated_data)
+        try:
+            with transaction.atomic():
+                reservation = Reservation.objects.create(**validated_data)
+        except IntegrityError:
+            # Constraint parcial: perdeu a corrida por outra reserva ativa.
+            raise serializers.ValidationError(
+                "Cápsula já possui uma reserva ativa."
+            ) from None
         record_status_change(
             reservation.capsule,
             Capsule.Status.RESERVED,
