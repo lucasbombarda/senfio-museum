@@ -44,6 +44,31 @@ class ReservationViewSet(viewsets.ModelViewSet):
         reservation = self.get_object()
         now = timezone.now()
 
+        # WARN: BR-002
+        """
+        - Ao criar uma reserva válida, a cápsula deve mudar para `reserved`.
+            Ok
+
+        - Uma reserva só pode ser retirada enquanto estiver `pending`.
+            Ok
+
+        - Se o prazo de retirada expirar, a reserva deve mudar para `expired`
+        e a cápsula deve voltar para `available`.
+            Ok
+
+        - Cápsulas raras ou únicas exigem aprovação manual antes do checkout
+        (a aprovação é do curador — ver BR-004).
+            Falta: cápsula `rare`/`unique` (requires_manual_approval) exige
+            aprovação do curador antes do checkout. Não é checado.
+
+        - Ao devolver uma cápsula sem dano, a reserva deve mudar para
+        `returned` e a cápsula para `available`.
+        - Ao devolver uma cápsula com dano, a cápsula deve ir para `quarantine`
+        e uma inspeção deve ser registrada.
+            Falta: devolução (returned/quarantine) não existe.
+
+
+        """
         if reservation.status != Reservation.Status.PENDING:
             return Response(
                 {"detail": "Somente reservas pendentes podem ser retiradas."},
