@@ -2,6 +2,15 @@ from rest_framework import permissions
 
 from scents.models import MuseumProfile
 
+# WARN: BR-004
+"""
+- CapsuleViewSet: aposentar (retired) só curador. Falta.
+- QualityCheckViewSet: inspeção so tecnico (IsTechnician não é usado nunca). Falta.
+- checkout: aprovar rara/única so curador. Falta.
+- ReservationViewSet: criar reserva qualquer perfil. Ok.
+- MuseumProfileViewSet: gerenciar perfis so curador (IsCurator). Ok.
+"""
+
 
 def _role(request):
     user = getattr(request, "user", None)
