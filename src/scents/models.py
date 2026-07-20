@@ -136,6 +136,12 @@ class ExternalEvent(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["source", "event_id"],
+                name="unique_external_event",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.source}:{self.event_id}"

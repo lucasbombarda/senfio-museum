@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from scents.models import (
     Batch,
     Capsule,
+    ExternalEvent,
     MuseumProfile,
     QualityCheck,
     Reservation,
@@ -112,19 +113,13 @@ class StatusChangeViewSet(viewsets.ReadOnlyModelViewSet):
 class ExternalMuseumWebhookView(APIView):
     def post(self, request):
         # WARN: BR-003
-        """
-        Evento novo registrado e processado.
-            Ok
+        existing = ExternalEvent.objects.filter(
+            source=request.data.get("source"),
+            event_id=request.data.get("event_id"),
+        ).first()
+        if existing:
+            return Response(ExternalEventSerializer(existing).data, status=status.HTTP_200_OK)
 
-        Repetido (source + event_id) retorna sucesso sem duplicar.
-            Falta: sem checagem nem unique_together. Duplica sempre.
-
-        capsule.quarantined manda cápsula pra quarentena.
-            Meio: update() silencioso, capsule_id ausente/inexistente nao erra.
-
-        Payload invalido retorna erro claro.
-            Falta: payload e JSONField livre, capsule_id nunca validado.
-        """
         serializer = ExternalEventSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         event = serializer.save(processed_at=timezone.now())
