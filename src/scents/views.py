@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -12,6 +13,7 @@ from scents.models import (
     QualityCheck,
     Reservation,
     StatusChange,
+    record_status_change,
 )
 from scents.permissions import IsCurator
 from scents.serializers import (
@@ -66,7 +68,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
         `returned` e a cápsula para `available`.
         - Ao devolver uma cápsula com dano, a cápsula deve ir para `quarantine`
         e uma inspeção deve ser registrada.
-            Falta: devolução (returned/quarantine) não existe.
+            Feito: endpoint de devolução (BR-006).
 
 
         """
@@ -91,6 +93,47 @@ class ReservationViewSet(viewsets.ModelViewSet):
         reservation.capsule.status = Capsule.Status.CHECKED_OUT
         reservation.save(update_fields=["status", "checked_out_at"])
         reservation.capsule.save(update_fields=["status", "updated_at"])
+        return Response(self.get_serializer(reservation).data)
+
+    @action(detail=True, methods=["post"], url_path="return")
+    def return_(self, request, pk=None):
+        reservation = self.get_object()
+
+        if reservation.status != Reservation.Status.CHECKED_OUT:
+            return Response(
+                {"detail": "Somente reservas retiradas podem ser devolvidas."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        damaged = bool(request.data.get("damaged"))
+        notes = request.data.get("notes", "")
+
+        with transaction.atomic():
+            reservation.status = Reservation.Status.RETURNED
+            reservation.returned_at = timezone.now()
+            reservation.return_notes = notes
+            reservation.save(update_fields=["status", "returned_at", "return_notes"])
+
+            if damaged:
+                record_status_change(
+                    reservation.capsule,
+                    Capsule.Status.QUARANTINE,
+                    reason=f"devolução com dano da reserva {reservation.id}",
+                )
+                QualityCheck.objects.create(
+                    capsule=reservation.capsule,
+                    reservation=reservation,
+                    inspector_name=request.data.get("inspector_name", "devolução"),
+                    result=QualityCheck.Result.DAMAGED,
+                    notes=notes,
+                )
+            else:
+                record_status_change(
+                    reservation.capsule,
+                    Capsule.Status.AVAILABLE,
+                    reason=f"devolução da reserva {reservation.id}",
+                )
+
         return Response(self.get_serializer(reservation).data)
 
 
