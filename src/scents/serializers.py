@@ -85,9 +85,7 @@ class ReservationSerializer(serializers.ModelSerializer):
                 reservation = Reservation.objects.create(**validated_data)
         except IntegrityError:
             # Constraint parcial: perdeu a corrida por outra reserva ativa.
-            raise serializers.ValidationError(
-                "Cápsula já possui uma reserva ativa."
-            ) from None
+            raise serializers.ValidationError("Cápsula já possui uma reserva ativa.") from None
         record_status_change(
             reservation.capsule,
             Capsule.Status.RESERVED,

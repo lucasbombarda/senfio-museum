@@ -4,14 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scents', '0003_reservation_unique_active_reservation_per_capsule'),
+        ("scents", "0003_reservation_unique_active_reservation_per_capsule"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='externalevent',
-            constraint=models.UniqueConstraint(fields=('source', 'event_id'), name='unique_external_event'),
+            model_name="externalevent",
+            constraint=models.UniqueConstraint(
+                fields=("source", "event_id"), name="unique_external_event"
+            ),
         ),
     ]

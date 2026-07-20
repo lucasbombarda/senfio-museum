@@ -4,14 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('scents', '0002_museumprofile_statuschange'),
+        ("scents", "0002_museumprofile_statuschange"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='reservation',
-            constraint=models.UniqueConstraint(condition=models.Q(('status__in', ['pending', 'checked_out'])), fields=('capsule',), name='unique_active_reservation_per_capsule'),
+            model_name="reservation",
+            constraint=models.UniqueConstraint(
+                condition=models.Q(("status__in", ["pending", "checked_out"])),
+                fields=("capsule",),
+                name="unique_active_reservation_per_capsule",
+            ),
         ),
     ]
